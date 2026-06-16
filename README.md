@@ -27,6 +27,29 @@ product.
 εκείνο το παράδειγμα. Το πρόβλημα είναι δύσκολο γιατί οι κλάσεις είναι πολύ
 ανισόρροπες (long-tail) και το macro-F1 δίνει ίσο βάρος και στις σπάνιες.
 
+## Ανάλυση δεδομένων (EDA)
+
+Οι κατηγορίες είναι έντονα ανισόρροπες — λίγες κλάσεις (allergens, biological)
+έχουν τα περισσότερα παραδείγματα, ενώ αρκετές έχουν ελάχιστα. Αυτό κάνει το
+macro-F1 δύσκολο.
+
+![Κατανομή hazard categories](code/results/figures/hazard_dist.png)
+
+![Κατανομή product categories](code/results/figures/product_dist.png)
+
+Η σχέση hazard–product δεν είναι ένα-προς-ένα: το ίδιο hazard εμφανίζεται σε
+πολλά προϊόντα και αντίστροφα, οπότε χρειάζεται και το κείμενο και το hazard
+signal.
+
+![Σχέση hazard × product](code/results/figures/joint_haz_prod.png)
+
+Τα κείμενα δεν έχουν όλα το ίδιο μήκος (γι' αυτό χρησιμοποίησα και character
+n-grams), και η κατανομή ανά έτος δεν είναι ομοιόμορφη.
+
+![Μήκος κειμένων](code/results/figures/doc_length.png)
+
+![Reports ανά έτος](code/results/figures/year_dist.png)
+
 ## Η μέθοδος
 
 1. **TF-IDF** σε `title + text + metadata` (word 1–2 grams + char_wb 3–5 grams).
