@@ -1,0 +1,21 @@
+true,predicted,count
+fraud,allergens,8
+other hazard,fraud,3
+organoleptic aspects,biological,2
+packaging defect,foreign bodies,2
+chemical,biological,2
+allergens,fraud,1
+packaging defect,chemical,1
+packaging defect,allergens,1
+other hazard,foreign bodies,1
+other hazard,chemical,1
+organoleptic aspects,foreign bodies,1
+fraud,foreign bodies,1
+biological,foreign bodies,1
+fraud,chemical,1
+fraud,biological,1
+food additives and flavourings,chemical,1
+chemical,fraud,1
+biological,packaging defect,1
+biological,other hazard,1
+packaging defect,other hazard,1
