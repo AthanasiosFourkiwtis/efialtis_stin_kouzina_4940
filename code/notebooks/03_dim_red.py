@@ -1,10 +1,10 @@
 # 03_dim_red.py
-# elegxw an h meiwsh diastasewn me Truncated SVD voithaei panw sto TF-IDF.
-# idea einai oti ta polla sparse features isws exoun thoryvo kai oti ena LSA
-# representation mporei na krathsei pio katharo semantic signal. Sthn praksh to
-# sVD xeirotereuei to ST1, giati xanontai spanies alla diakritikes lekseis. To
-# kalytero run einai SVD600 me LinearSVC, alla menei katw apo to plain classical
-# baseline tou 02_classical.py.
+# Checks whether dimensionality reduction with Truncated SVD helps on top of TF-IDF.
+# The idea is that the many sparse features may carry noise and that an LSA
+# representation might keep a cleaner semantic signal. In practice the
+# SVD makes ST1 worse, because rare but discriminative words get lost. The
+# best run is SVD600 with LinearSVC, but it stays below the plain classical
+# baseline of 02_classical.py.
 
 import sys
 from pathlib import Path
@@ -25,9 +25,9 @@ sys.path.append(str(ROOT))
 DATA_DIR = ROOT.parent / "data" / "raw"
 if not DATA_DIR.exists():
     DATA_DIR = ROOT / "data" / "raw"
-from src.scoring import metrhse_st1
+from src.scoring import score_st1
 
-# fortwnw ta data
+# load the data
 train = pd.read_csv(DATA_DIR / "train.csv", index_col=0)
 valid = pd.read_csv(DATA_DIR / "valid.csv", index_col=0)
 test  = pd.read_csv(DATA_DIR / "test.csv")
@@ -41,8 +41,8 @@ y_prod_tr = train["product-category"].values
 y_haz_va  = valid["hazard-category"].values
 y_prod_va = valid["product-category"].values
 
-# idia tfidf opws sto 02 (word 1-2 + char_wb 3-5)
-print("kanoume tfidf")
+# same tfidf as in 02 (word 1-2 + char_wb 3-5)
+print("fitting tfidf")
 tf_word = TfidfVectorizer(ngram_range=(1,2), min_df=3, max_df=0.95, sublinear_tf=True, max_features=200_000)
 Xw_tr = tf_word.fit_transform(X_tr_raw); Xw_va = tf_word.transform(X_va_raw); Xw_te = tf_word.transform(X_te_raw)
 tf_char = TfidfVectorizer(analyzer="char_wb", ngram_range=(3,5), min_df=3, sublinear_tf=True, max_features=200_000)
@@ -53,7 +53,7 @@ X_va = hstack([Xw_va, Xc_va]).tocsr()
 X_te = hstack([Xw_te, Xc_te]).tocsr()
 print("tfidf shape:", X_tr.shape)
 
-# dokimazw ligous diaforetikous ari8mous diastatasewn
+# try a few different numbers of dimensions
 results = []
 best_score = -1.0
 best_label = None
@@ -66,7 +66,7 @@ for n_comp in [100, 300, 600]:
     Z_tr = svd.fit_transform(X_tr)
     Z_va = svd.transform(X_va)
     Z_te = svd.transform(X_te)
-    # meta to SVD kanw L2-normalize ta dianysmata (LSA standard)
+    # after the SVD, L2-normalize the vectors (LSA standard)
     nrm = Normalizer(copy=False)
     Z_tr = nrm.fit_transform(Z_tr); Z_va = nrm.transform(Z_va); Z_te = nrm.transform(Z_te)
     expl = float(svd.explained_variance_ratio_.sum())
@@ -85,7 +85,7 @@ for n_comp in [100, 300, 600]:
         pred_h_va = clf_h.predict(Z_va)
         pred_p_va = clf_p.predict(Z_va)
 
-        parts = metrhse_st1(y_haz_va, pred_h_va, y_prod_va, pred_p_va, return_components=True)
+        parts = score_st1(y_haz_va, pred_h_va, y_prod_va, pred_p_va, return_components=True)
         label = f"svd{n_comp}_{clf_name}"
         print(f"  {clf_name:6s} st1={parts['st1']:.4f}  haz={parts['f1_hazard']:.4f}  prod={parts['f1_product_cond']:.4f}")
         results.append((label, n_comp, expl, parts))
@@ -101,7 +101,7 @@ for label, n_comp, expl, parts in results:
     print(f"{label:18s} expl={expl:.3f}  st1={parts['st1']:.4f}  haz={parts['f1_hazard']:.4f}  prod={parts['f1_product_cond']:.4f}")
 print(f"best: {best_label} ({best_score:.4f})")
 
-# grafw submission gia to best
+# write the submission for the best run
 sub = pd.DataFrame({
     "id": test["id"].values,
     "hazard-category": best_pred_h_te,
@@ -111,7 +111,7 @@ sub_path = ROOT / "results/predictions" / f"submission_{best_label}.csv"
 sub.to_csv(sub_path, index=False)
 print(f"submission -> {sub_path}")
 
-# grafw log
+# write the log
 log_path = ROOT / "results/eval_log.csv"
 write_header = not log_path.exists()
 with open(log_path, "a", newline="", encoding="utf-8") as f:

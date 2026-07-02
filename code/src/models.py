@@ -4,7 +4,7 @@ from scipy.sparse import hstack
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
-def ekpaideuse_tfidf(train_text, word_max_features=250_000, char_max_features=250_000):
+def fit_tfidf(train_text, word_max_features=250_000, char_max_features=250_000):
     word = TfidfVectorizer(
         ngram_range=(1, 2),
         min_df=3,
@@ -25,5 +25,5 @@ def ekpaideuse_tfidf(train_text, word_max_features=250_000, char_max_features=25
     return word, char, hstack([Xw, Xc]).tocsr()
 
 
-def efarmose_tfidf(word, char, text):
+def apply_tfidf(word, char, text):
     return hstack([word.transform(text), char.transform(text)]).tocsr()

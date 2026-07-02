@@ -1,110 +1,110 @@
 # Efialtis Stin Kouzina
 
 Food Hazard Detection — SemEval-2025 Task 9, Subtask 1 (ST1).
-Εργασία στο μάθημα NLP 053, CSE UOI 2026. AM 4940, Φουρκιώτης Αθανάσιος.
+Project for the NLP 053 course, CSE UOI 2026. Student ID 4940, Athanasios Fourkiotis.
 
-Για κάθε ανάκληση τροφίμου (food recall) θέλουμε να προβλέψουμε δύο labels από
-το κείμενο: το `hazard-category` (10 κλάσεις) και το `product-category`
-(22 κλάσεις).
+For every food recall we want to predict two labels from the text:
+the `hazard-category` (10 classes) and the `product-category`
+(22 classes).
 
-## Το όνομα
+## The name
 
-**Efialtis Stin Kouzina** (Εφιάλτης στην Κουζίνα): το σύστημα εντοπίζει τους
-«εφιάλτες» που κρύβονται στις ανακλήσεις τροφίμων — αλλεργιογόνα, μολύνσεις,
-ξένα σώματα — πριν φτάσουν στο πιάτο. Δουλεύει σε δύο βήματα: πρώτα βρίσκει το
-hazard, και μετά χρησιμοποιεί αυτή την πρόβλεψη για να βοηθήσει την πρόβλεψη του
+**Efialtis Stin Kouzina** (Greek for "Kitchen Nightmare"): the system spots the
+"nightmares" hiding inside food recalls — allergens, contaminations, foreign
+bodies — before they reach the plate. It works in two steps: first it detects
+the hazard, then it uses that prediction to help predict the
 product.
 
-## Η μετρική
+## The metric
 
-Το επίσημο ST1 δεν είναι απλός μέσος όρος δύο classifiers:
+The official ST1 score is not a simple average of two classifiers:
 
 ```
-(macroF1(hazard) + macroF1(product, μόνο όπου το hazard είναι σωστό)) / 2
+(macroF1(hazard) + macroF1(product, only where the hazard is correct)) / 2
 ```
 
-Δηλαδή αν το hazard βγει λάθος, η σωστή πρόβλεψη του product δεν μετράει σε
-εκείνο το παράδειγμα. Το πρόβλημα είναι δύσκολο γιατί οι κλάσεις είναι πολύ
-ανισόρροπες (long-tail) και το macro-F1 δίνει ίσο βάρος και στις σπάνιες.
+In other words, if the hazard comes out wrong, a correct product prediction
+does not count for that example. The problem is hard because the classes are
+heavily imbalanced (long-tail) and macro-F1 gives equal weight to the rare ones.
 
-## Ανάλυση δεδομένων (EDA)
+## Exploratory data analysis (EDA)
 
-Οι κατηγορίες είναι έντονα ανισόρροπες — λίγες κλάσεις (allergens, biological)
-έχουν τα περισσότερα παραδείγματα, ενώ αρκετές έχουν ελάχιστα. Αυτό κάνει το
-macro-F1 δύσκολο.
+The categories are strongly imbalanced — a few classes (allergens, biological)
+hold most of the examples, while several have barely any. That is what makes
+macro-F1 difficult.
 
-![Κατανομή hazard categories](code/results/figures/hazard_dist.png)
+![Hazard category distribution](code/results/figures/hazard_dist.png)
 
-![Κατανομή product categories](code/results/figures/product_dist.png)
+![Product category distribution](code/results/figures/product_dist.png)
 
-Η σχέση hazard–product δεν είναι ένα-προς-ένα: το ίδιο hazard εμφανίζεται σε
-πολλά προϊόντα και αντίστροφα, οπότε χρειάζεται και το κείμενο και το hazard
-signal.
+The hazard–product relationship is not one-to-one: the same hazard shows up in
+many products and vice versa, so both the text and the hazard
+signal are needed.
 
-![Σχέση hazard × product](code/results/figures/joint_haz_prod.png)
+![Hazard × product relationship](code/results/figures/joint_haz_prod.png)
 
-Τα κείμενα δεν έχουν όλα το ίδιο μήκος (γι' αυτό χρησιμοποίησα και character
-n-grams), και η κατανομή ανά έτος δεν είναι ομοιόμορφη.
+The documents vary a lot in length (which is why character
+n-grams were also used), and the per-year distribution is not uniform.
 
-![Μήκος κειμένων](code/results/figures/doc_length.png)
+![Document length](code/results/figures/doc_length.png)
 
-![Reports ανά έτος](code/results/figures/year_dist.png)
+![Reports per year](code/results/figures/year_dist.png)
 
-## Η μέθοδος
+## The approach
 
-1. **TF-IDF** σε `title + text + metadata` (word 1–2 grams + char_wb 3–5 grams).
-   Τα metadata (country, year, month) μπαίνουν σαν απλά text tokens.
-2. **MiniLM** sentence embeddings (384-dim, L2-normalized), stacked στα TF-IDF
-   με scale=0.7 — βρέθηκε με sweep, είναι "U-shape" (πολύ ή πολύ λίγο βλάπτει).
-3. **Hazard** LinearSVC πάνω στο stacked feature space.
-4. **Out-of-fold** (5-fold) hazard predictions στο train: κάθε row παίρνει
-   πρόβλεψη από μοντέλο που δεν το είδε, ώστε το product να μάθει έναν
-   ρεαλιστικό (~94%) hazard signal χωρίς leakage.
-5. Το OOF hazard μπαίνει σαν one-hot feature και το **product** LinearSVC
-   εκπαιδεύεται πάνω στο τελικό feature space.
-6. Τελικό submission: **stacking ensemble** (TF-IDF/OOF + MiniLM) με βάρη που
-   επιλέχθηκαν μέσω cross-validation.
+1. **TF-IDF** over `title + text + metadata` (word 1–2 grams + char_wb 3–5 grams).
+   The metadata (country, year, month) go in as plain text tokens.
+2. **MiniLM** sentence embeddings (384-dim, L2-normalized), stacked onto the TF-IDF
+   with scale=0.7 — found via a sweep; it is "U-shaped" (too much or too little hurts).
+3. **Hazard** LinearSVC on the stacked feature space.
+4. **Out-of-fold** (5-fold) hazard predictions on the train set: every row gets
+   a prediction from a model that never saw it, so the product learns a
+   realistic (~94%) hazard signal without leakage.
+5. The OOF hazard goes in as a one-hot feature and the **product** LinearSVC
+   is trained on the final feature space.
+6. Final submission: **stacking ensemble** (TF-IDF/OOF + MiniLM) with weights
+   selected through cross-validation.
 
-## Αποτελέσματα
+## Results
 
-| Μοντέλο | Validation ST1 | Kaggle public |
+| Model | Validation ST1 | Kaggle public |
 | --- | ---: | ---: |
 | TF-IDF + LinearSVC | 0.7599 | — |
 | Efialtis Stin Kouzina (TF-IDF + OOF hazard) | 0.7623 | 0.7573 |
 | + MiniLM embeddings (scale=0.7) | 0.7737 | 0.7512 |
-| **Stacking ensemble (τελικό)** | — | **0.7775** |
+| **Stacking ensemble (final)** | — | **0.7775** |
 
-Σημαντικό μάθημα: το single validation split (565 δείγματα) ήταν αναξιόπιστο.
-Με 5-fold CV το ST1 βγήκε 0.7036 ± 0.0516 — οι «βελτιώσεις» κάτω από ~0.05
-χάνονταν στη διακύμανση. Μόνο το stacking πέρασε και από το CV και από το
-Kaggle. Δοκίμασα επίσης fine-tuned DistilBERT, αλλά σε αυτό το μικρό dataset με
-macro-F1 το κλασικό TF-IDF + LinearSVC (class_weight=balanced) αποδείχθηκε
-καλύτερο.
+Key lesson: the single validation split (565 samples) was unreliable.
+With 5-fold CV the ST1 came out at 0.7036 ± 0.0516 — "improvements" below ~0.05
+were lost in the variance. Only the stacking survived both the CV and
+Kaggle. A fine-tuned DistilBERT was also tried, but on this small dataset with
+macro-F1 the classic TF-IDF + LinearSVC (class_weight=balanced) proved
+better.
 
-## Δομή
+## Layout
 
 ```
-code/            κώδικας (notebooks 01–12, src/, tests, main.py)
+code/            code (notebooks 01–12, src/, tests, main.py)
   notebooks/     EDA -> classical -> SOTA -> embeddings -> CV -> stacking
   src/           helpers (preprocess, scoring, io, models)
   results/       figures, analysis, predictions, logs
 data/raw/        train.csv, valid.csv, test.csv
-report.pdf       αναφορά (15 ενότητες)
-presentation.pdf παρουσίαση
+report.pdf       report (15 sections)
+presentation.pdf presentation
 ```
 
-Αναλυτικές οδηγίες εκτέλεσης και πλήρης ιστορία πειραμάτων (μαζί με όσα **δεν**
-δούλεψαν) στο [`code/README.md`](code/README.md) και στο `report.pdf`.
+Detailed run instructions and the full experiment history (including what
+**didn't** work) live in [`code/README.md`](code/README.md) and in `report.pdf`.
 
-## Γρήγορη εκτέλεση
+## Quick start
 
 ```powershell
 cd code
 pip install -r requirements.txt
-python main.py            # παράγει το τελικό submission_stacking.csv
+python main.py            # produces the final submission_stacking.csv
 ```
 
-## Δεδομένα
+## Data
 
-Τα δεδομένα προέρχονται από το SemEval-2025 Task 9 / Food Recall Incidents
-(CC BY-NC-SA 4.0) και χρησιμοποιούνται μόνο για εκπαιδευτικούς σκοπούς.
+The data comes from SemEval-2025 Task 9 / Food Recall Incidents
+(CC BY-NC-SA 4.0) and is used for educational purposes only.

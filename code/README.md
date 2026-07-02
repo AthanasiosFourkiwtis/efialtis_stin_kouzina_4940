@@ -1,41 +1,41 @@
-﻿# Efialtis Stin Kouzina — Food Hazard Detection (SemEval-2025 Task 9, ST1)
+# Efialtis Stin Kouzina — Food Hazard Detection (SemEval-2025 Task 9, ST1)
 
-Project για το Kaggle challenge στο SemEval-2025 Task 9, ST1. Για κάθε food
-recall θέλουμε να προβλέψουμε το `hazard-category` και το `product-category`.
+Project for the Kaggle challenge of SemEval-2025 Task 9, ST1. For every food
+recall we want to predict the `hazard-category` and the `product-category`.
 
-Το όνομα **Efialtis Stin Kouzina** (Εφιάλτης στην Κουζίνα) περιγράφει τι
-κάνει το σύστημα: εντοπίζει τους «εφιάλτες» που κρύβονται στις ανακλήσεις
-τροφίμων πριν φτάσουν στο πιάτο. Η μέθοδος δουλεύει σε δύο βήματα: πρώτα
-εντοπίζουμε το hazard (τι πρόβλημα έχει το recall), και μετά ο product
-ταξινομητής χρησιμοποιεί αυτό το signal μαζί με το feature space για να
-αποφασίσει το product.
+The name **Efialtis Stin Kouzina** (Greek for "Kitchen Nightmare") describes
+what the system does: it spots the "nightmares" hiding inside food recalls
+before they reach the plate. The method works in two steps: first we detect
+the hazard (what is wrong with the recall), and then the product
+classifier uses that signal together with the feature space to
+decide the product.
 
-Το score είναι:
+The score is:
 
 ```text
-(macroF1(hazard) + macroF1(product μόνο όταν το hazard είναι σωστό)) / 2
+(macroF1(hazard) + macroF1(product only when the hazard is correct)) / 2
 ```
 
-## Φάκελοι
+## Folders
 
-Ο φάκελος `data/raw/` έχει τα `train.csv`, `valid.csv` και `test.csv`. Ο
-φάκελος `src/` έχει τα βασικά helper functions. Ο φάκελος `notebooks/` έχει
-τα scripts `01`–`12`: τα `01`–`09` είναι το τοπικό pipeline (EDA →
-classical → SOTA → embeddings) και τα `10`–`12` το CV evaluation
-(`10_cv_eval.py`), το threshold tuning (`11_threshold_tune_cv.py`) και το
-τελικό stacking ensemble (`12_stacking_ensemble.py`).
+`data/raw/` holds `train.csv`, `valid.csv`, and `test.csv`.
+`src/` holds the core helper functions. `notebooks/` holds
+scripts `01`–`12`: `01`–`09` form the local pipeline (EDA →
+classical → SOTA → embeddings) and `10`–`12` cover the CV evaluation
+(`10_cv_eval.py`), the threshold tuning (`11_threshold_tune_cv.py`), and the
+final stacking ensemble (`12_stacking_ensemble.py`).
 
-Τα plots της αναφοράς είναι στο `results/figures/`, ενώ τα class reports, τα
-confusions και τα παραδείγματα λαθών είναι στο `results/analysis/`. Τα Kaggle
-submissions είναι στο `results/predictions/`.
+The report figures live in `results/figures/`, while the class reports,
+confusion matrices, and error examples are in `results/analysis/`. The Kaggle
+submissions are in `results/predictions/`.
 
-Η αναφορά (`report.docx`/`report.pdf`) και η παρουσίαση
-(`presentation.pptx`/`presentation.pdf`) βρίσκονται στον γονικό φάκελο της
-παράδοσης, και τα απλά unit tests στο `tests/test_core.py`.
+The report (`report.docx`/`report.pdf`) and the presentation
+(`presentation.pptx`/`presentation.pdf`) sit in the parent folder of the
+deliverable, and the simple unit tests in `tests/test_core.py`.
 
-Το `notebooks/10_distilbert_colab.ipynb` είναι το **DistilBERT fine-tune
-notebook για Colab GPU** (neural baseline, ενότητα 12 του report) — δες
-οδηγίες παρακάτω.
+`notebooks/10_distilbert_colab.ipynb` is the **DistilBERT fine-tune
+notebook for Colab GPU** (neural baseline, section 12 of the report) — see
+the instructions below.
 
 ## Setup
 
@@ -45,7 +45,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## Για να τρέξει όλο
+## Running everything
 
 ```powershell
 python notebooks/01_eda.py
@@ -60,7 +60,7 @@ python notebooks/09_embeddings.py
 python -m unittest discover -s tests
 ```
 
-## Για μόνο το τελικό submission
+## Producing just the final submission
 
 ```powershell
 python main.py --submit
@@ -68,15 +68,15 @@ python notebooks/06_eval.py
 python -m unittest discover -s tests
 ```
 
-(Το `main.py` καλεί το `notebooks/12_stacking_ensemble.py`.)
+(`main.py` invokes `notebooks/12_stacking_ensemble.py`.)
 
-Το τελικό submission είναι
-`results/predictions/submission_stacking.csv` με καλύτερο επιβεβαιωμένο Kaggle
-public score `0.77750`.
+The final submission is
+`results/predictions/submission_stacking.csv`, with a best confirmed Kaggle
+public score of `0.77750`.
 
-## Τι δοκίμασα
+## What was tried
 
-| Notebook | Μοντέλο | Validation ST1 |
+| Notebook | Model | Validation ST1 |
 | --- | --- | ---: |
 | 02_classical | TF-IDF + LogReg | 0.6875 |
 | 02_classical | TF-IDF + LinearSVC | 0.7599 |
@@ -87,93 +87,93 @@ public score `0.77750`.
 | 08_efialtis_kouzina | TF-IDF + OOF hazard + LinearSVC | 0.7623 |
 | **09_embeddings** | **TF-IDF + MiniLM (scale=0.7) + OOF hazard + LinearSVC** | **0.7737** |
 
-Το καλύτερο single validation score στο τοπικό log είναι `0.7737` για το
-MiniLM run. Το καλύτερο Kaggle public score είναι `0.77750` από το
+The best single validation score in the local log is `0.7737`, from the
+MiniLM run. The best Kaggle public score is `0.77750`, from
 `submission_stacking.csv`.
 
-## Πώς δουλεύει το Efialtis Stin Kouzina
+## How Efialtis Stin Kouzina works
 
-1. TF-IDF (word 1-2 + char_wb 3-5) πάνω σε `title + text + metadata`.
-2. **Sentence embeddings** (MiniLM-L6-v2, 384-dim, L2-normalized) για κάθε
-   κείμενο. Cached στο `results/cache/emb_minilm_*.npy`.
-3. Stack TF-IDF + (embeddings × scale=0.7). Το scale βρέθηκε με sweep
-   `[0, 0.2, 0.3, 0.5, 0.7, 1.0]` και είναι **U-shape**: πολύ ή πολύ λίγο
-   βλάπτει — τα embeddings πρέπει να συνεισφέρουν αλλά να μη καταπνίξουν
-   τα 160k TF-IDF features.
-4. Hazard LinearSVC εκπαιδεύεται στο stacked space.
-5. **5-fold out-of-fold** hazard predictions πάνω στο train (ρεαλιστικό
-   ~94% accurate signal, χωρίς leakage).
-6. Το OOF hazard μπαίνει σαν sparse **one-hot 10 διαστάσεων**, στοιβαγμένο
-   στο stacked TF-IDF+embeddings.
-7. Product LinearSVC εκπαιδεύεται πάνω στο final feature space.
-8. Στο test, το hazard έρχεται από το full-train hazard μοντέλο (όχι OOF).
+1. TF-IDF (word 1-2 + char_wb 3-5) over `title + text + metadata`.
+2. **Sentence embeddings** (MiniLM-L6-v2, 384-dim, L2-normalized) for every
+   document. Cached in `results/cache/emb_minilm_*.npy`.
+3. Stack TF-IDF + (embeddings × scale=0.7). The scale was found via a sweep
+   over `[0, 0.2, 0.3, 0.5, 0.7, 1.0]` and is **U-shaped**: too much or too
+   little hurts — the embeddings should contribute without drowning out
+   the 160k TF-IDF features.
+4. The hazard LinearSVC is trained on the stacked space.
+5. **5-fold out-of-fold** hazard predictions over the train set (a realistic
+   ~94% accurate signal, with no leakage).
+6. The OOF hazard goes in as a sparse **10-dimensional one-hot**, stacked
+   onto the TF-IDF+embeddings space.
+7. The product LinearSVC is trained on the final feature space.
+8. At test time, the hazard comes from the full-train hazard model (not OOF).
 
 ## Failed experiments
 
-Νωρίς:
+Early on:
 
-- Per-hazard product models (08_efialtis_kouzina try, ST1=0.7311): ένα
-  ξεχωριστό LinearSVC ανά hazard. Έπεσε γιατί τα product labels εμφανίζονται
-  σε πολλές hazards και το macro F1 χάνει συνοχή.
-- MiniLM embeddings στο raw scale=1.0 (ST1=0.7448): τα dense embeddings
-  κυριαρχούσαν πάνω στο sparse TF-IDF. Λύση: scale=0.7.
+- Per-hazard product models (08_efialtis_kouzina attempt, ST1=0.7311): one
+  separate LinearSVC per hazard. It fell apart because product labels appear
+  across many hazards and the macro F1 loses coherence.
+- MiniLM embeddings at raw scale=1.0 (ST1=0.7448): the dense embeddings
+  dominated the sparse TF-IDF. Fix: scale=0.7.
 
-Αργότερα (μετά το stacking ensemble στο 0.77750 στο Kaggle), δοκίμασα 6
-ακόμα προσεγγίσεις και καμία δεν με ανέβασε:
+Later (after the stacking ensemble hit 0.77750 on Kaggle), 6 more
+approaches were tried and none moved the score up:
 
-| Πείραμα | CV gain | Folds + | Kaggle Δέλτα |
+| Experiment | CV gain | Folds + | Kaggle delta |
 |---|---:|:---:|---:|
 | 3-way stacking v2 (single-split tuning) | — | — | −0.012 |
 | DistilBERT v3 single fine-tune | — | — | −0.041 |
 | 3-way stacking v3 (proper CV OOF) | +0.018 | 4/5 | −0.013 |
-| DeBERTa-v3 OOF | — | — | NaN (μη υποβληθέν) |
+| DeBERTa-v3 OOF | — | — | NaN (not submitted) |
 | mpnet swap (× 0.7) | +0.031 | 5/5 | −0.015 |
 | Hybrid weighted majority vote | — | — | −0.010 |
 
-Σημείωση για τα DistilBERT: το fine-tune v2 έβγαλε ST1 `0.8071` στο single
-validation split (565 δείγματα) — δελεαστικό, αλλά το single-split
-υπερεκτιμά. Καμία εκδοχή του BERT (v2/v3) δεν ξεπέρασε το TF-IDF + MiniLM
-stack σε proper CV ή στο Kaggle, οπότε τα neural μοντέλα έμειναν
-τεκμηριωμένο baseline και δεν μπήκαν στο τελικό pipeline.
+A note on DistilBERT: the v2 fine-tune scored ST1 `0.8071` on the single
+validation split (565 samples) — tempting, but the single split
+overestimates. No BERT variant (v2/v3) beat the TF-IDF + MiniLM
+stack under proper CV or on Kaggle, so the neural models remained a
+documented baseline and stayed out of the final pipeline.
 
-Το 0.77750 είναι το καλύτερο που πέτυχα με όσα δοκίμασα. Περισσότερα στις
-ενότητες 14-15 του `report.docx`.
+0.77750 is the best result achieved across everything tried. More in
+sections 14-15 of `report.docx`.
 
-## DistilBERT στο Colab (neural baseline)
+## DistilBERT on Colab (neural baseline)
 
-Για το `notebooks/10_distilbert_colab.ipynb` (δύο ξεχωριστά DistilBERT models,
-ένα για hazard και ένα για product· τεκμηρίωση στην ενότητα 12 του report):
+For `notebooks/10_distilbert_colab.ipynb` (two separate DistilBERT models,
+one for hazard and one for product; documented in section 12 of the report):
 
-1. Πήγαινε στο [Colab](https://colab.research.google.com) → New notebook.
-2. **Runtime → Change runtime type → GPU** (T4 free αρκεί).
-3. Άνοιξε το `10_distilbert_colab.ipynb` (File → Upload notebook).
-4. Στο Files panel (αριστερά), ανέβασε τα `data/raw/train.csv`,
+1. Go to [Colab](https://colab.research.google.com) → New notebook.
+2. **Runtime → Change runtime type → GPU** (a free T4 is enough).
+3. Open `10_distilbert_colab.ipynb` (File → Upload notebook).
+4. In the Files panel (left), upload `data/raw/train.csv`,
    `data/raw/valid.csv`, `data/raw/test.csv`.
-5. **Runtime → Run all**. Περιμένεις ~30-45 λεπτά.
-6. Κατέβα το `submission_distilbert.csv` και ανέβασέ το στο Kaggle.
+5. **Runtime → Run all**. Expect ~30-45 minutes.
+6. Download `submission_distilbert.csv` and submit it to Kaggle.
 
-Παράγει επίσης `logits_haz_*.npy`, `logits_prod_*.npy` και `label_maps.json`
-αν θες αργότερα να κάνεις ensemble με το Efialtis Stin Kouzina τοπικά.
+It also produces `logits_haz_*.npy`, `logits_prod_*.npy`, and `label_maps.json`
+in case you later want to ensemble with Efialtis Stin Kouzina locally.
 
-## Τελικά CSVs
+## Final CSVs
 
-Στο `results/predictions/` υπάρχουν τα submissions όλων των σταδίων:
+`results/predictions/` holds the submissions of every stage:
 
-- `submission_stacking.csv` — **τελικό / καλύτερο**, Kaggle public score
+- `submission_stacking.csv` — **final / best**, Kaggle public score
   `0.77750`.
 - `submission_efialtis_kouzina.csv`, `submission_efialtis_kouzina_v2.csv`,
   `submission_sota_linsvc_ch1_cp2.csv`, `submission_classical_linsvc.csv`,
-  `submission_svd600_linsvc.csv`, `submission_mlp_svd300.csv` — ενδιάμεσα
-  baseline submissions των ενοτήτων 4-9.
+  `submission_svd600_linsvc.csv`, `submission_mlp_svd300.csv` — intermediate
+  baseline submissions from sections 4-9.
 
-Τα αποτυχημένα πειράματα της ενότητας 15 (3-way stacking, mpnet swap, hybrid
-vote κ.λπ.) δεν κρατούνται ως αρχεία· τα Kaggle scores τους και η ανάλυση
-είναι στην ενότητα 15 του report και στον πίνακα «Failed experiments»
-παραπάνω.
+The failed experiments of section 15 (3-way stacking, mpnet swap, hybrid
+vote, etc.) are not kept as files; their Kaggle scores and the analysis
+are in section 15 of the report and in the "Failed experiments" table
+above.
 
-## Παραδοτέα
+## Deliverables
 
-- `main.py` — entry point, παράγει `submission_stacking.csv` (Kaggle 0.77750)
-- `report.docx` / `report.pdf` — αναφορά 15 ενοτήτων (Ελληνικά)
-- `presentation.pptx` / `presentation.pdf` — παρουσίαση (15 slides)
-- `notebooks/` — πλήρης ιστορία πειραμάτων (production + documented failures)
+- `main.py` — entry point, produces `submission_stacking.csv` (Kaggle 0.77750)
+- `report.docx` / `report.pdf` — 15-section report (in Greek)
+- `presentation.pptx` / `presentation.pdf` — presentation (15 slides)
+- `notebooks/` — full experiment history (production + documented failures)

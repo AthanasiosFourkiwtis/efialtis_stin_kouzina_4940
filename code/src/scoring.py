@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.metrics import f1_score, classification_report, confusion_matrix
 
 
-def metrhse_st1(y_haz_true, y_haz_pred, y_prod_true, y_prod_pred, return_components=False):
+def score_st1(y_haz_true, y_haz_pred, y_prod_true, y_prod_pred, return_components=False):
     y_haz_true = np.asarray(y_haz_true)
     y_haz_pred = np.asarray(y_haz_pred)
     y_prod_true = np.asarray(y_prod_true)
@@ -32,9 +32,9 @@ def metrhse_st1(y_haz_true, y_haz_pred, y_prod_true, y_prod_pred, return_compone
     return score
 
 
-def report_ana_klash(y_true, y_pred, labels=None):
+def per_class_report(y_true, y_pred, labels=None):
     return classification_report(y_true, y_pred, labels=labels, zero_division=0)
 
 
-def pinakas_sygxysis(y_true, y_pred, labels):
+def confusion_table(y_true, y_pred, labels):
     return confusion_matrix(y_true, y_pred, labels=labels)

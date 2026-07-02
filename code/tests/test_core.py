@@ -6,19 +6,19 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.io_utils import grapse_submission
-from src.preprocess import ftiakse_keimeno, katharise_keimeno
-from src.scoring import metrhse_st1
+from src.io_utils import write_submission
+from src.preprocess import build_text, clean_text
+from src.scoring import score_st1
 
 
-# apla unit tests gia ta core helpers, oxi gia ta varia ML experiments.
+# simple unit tests for the core helpers, not for the heavy ML experiments.
 class CoreTests(unittest.TestCase):
     def test_normalize_text_collapses_whitespace_and_lowercases(self):
-        # elegxei oti to preprocessing kanei lowercase kai katharizei whitespace.
-        self.assertEqual(katharise_keimeno("  A\nB\tC  "), "a b c")
+        # checks that preprocessing lowercases and cleans up whitespace.
+        self.assertEqual(clean_text("  A\nB\tC  "), "a b c")
 
     def test_build_text_adds_metadata_tokens(self):
-        # elegxei oti country/year/month mpainei sto text representation.
+        # checks that country/year/month make it into the text representation.
         df = pd.DataFrame(
             {
                 "country": ["us"],
@@ -28,14 +28,14 @@ class CoreTests(unittest.TestCase):
                 "text": ["Listeria in ham"],
             }
         )
-        text = ftiakse_keimeno(df).iloc[0]
+        text = build_text(df).iloc[0]
         self.assertIn("country_us", text)
         self.assertIn("year_2026", text)
         self.assertIn("recall listeria", text)
 
     def test_st1_score_product_is_conditioned_on_correct_hazard(self):
-        # product F1 prepei na metrietai mono ekei pou to hazard einai swsto.
-        parts = metrhse_st1(
+        # product F1 must be measured only where the hazard is correct.
+        parts = score_st1(
             ["a", "b", "b"],
             ["a", "a", "b"],
             ["x", "y", "z"],
@@ -47,10 +47,10 @@ class CoreTests(unittest.TestCase):
         self.assertLess(parts["f1_product_cond"], 1)
 
     def test_write_submission_validates_shape_and_columns(self):
-        # elegxei oti to submission exei ta swsta columns kai swsto megethos.
+        # checks that the submission has the right columns and the right size.
         test = pd.DataFrame({"id": [10, 11]})
         with tempfile.TemporaryDirectory() as tmp:
-            path = grapse_submission(test, ["h1", "h2"], ["p1", "p2"], Path(tmp) / "sub.csv")
+            path = write_submission(test, ["h1", "h2"], ["p1", "p2"], Path(tmp) / "sub.csv")
             sub = pd.read_csv(path)
             self.assertEqual(sub.columns.tolist(), ["id", "hazard-category", "product-category"])
             self.assertEqual(len(sub), 2)

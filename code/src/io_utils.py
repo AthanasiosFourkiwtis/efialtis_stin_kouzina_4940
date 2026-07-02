@@ -1,11 +1,11 @@
-# I/O helpers gia data, submissions, paths.
+# I/O helpers for data, submissions, paths.
 from pathlib import Path
 import pandas as pd
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# stathera paths gia na min grafw hardcoded folders mesa se kathe script.
+# fixed paths, so no script has to hardcode folders on its own.
 RAW_DIR = ROOT.parent / "data" / "raw"
 if not RAW_DIR.exists():
     RAW_DIR = ROOT / "data" / "raw"
@@ -15,23 +15,23 @@ MODEL_DIR = ROOT / "results" / "models"
 LOG_PATH = ROOT / "results" / "eval_log.csv"
 
 
-def fortwse_split(name):
-    # fortwnei ena apo ta train/valid/test csv.
-    # train kai valid exoun extra index column apo to arxiko dataset.
+def load_split(name):
+    # loads one of the train/valid/test csv files.
+    # train and valid carry an extra index column from the original dataset.
     path = RAW_DIR / f"{name}.csv"
-    # train/valid exoun extra index column, test oxi
+    # train/valid have an extra index column, test does not
     if name in ("train", "valid"):
         return pd.read_csv(path, index_col=0)
     return pd.read_csv(path)
 
 
-def fortwse_dedomena():
-    # kentriko helper gia ola ta experiments: gyrnaei panta train, valid, test.
-    return fortwse_split("train"), fortwse_split("valid"), fortwse_split("test")
+def load_data():
+    # central helper for all experiments: always returns train, valid, test.
+    return load_split("train"), load_split("valid"), load_split("test")
 
 
-def grapse_submission(test, hazard_pred, product_pred, path):
-    # ftiaxnei submission csv me ta akrivi columns pou perimenei to Kaggle.
+def write_submission(test, hazard_pred, product_pred, path):
+    # builds a submission csv with the exact columns Kaggle expects.
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
 
@@ -41,7 +41,7 @@ def grapse_submission(test, hazard_pred, product_pred, path):
         "product-category": product_pred,
     })
 
-    # kanw basikous elegxoi prin grafthei to arxeio, gia na min anevei lathos csv.
+    # basic sanity checks before the file is written, so a bad csv never gets uploaded.
     if len(sub) != len(test):
         raise ValueError(f"submission has {len(sub)} rows, expected {len(test)}")
     if sub.isna().any().any():
