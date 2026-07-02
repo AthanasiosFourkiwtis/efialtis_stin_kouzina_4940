@@ -9,61 +9,61 @@ the `hazard-category` (10 classes) and the `product-category`
 
 ## The name
 
-**Efialtis Stin Kouzina** (Greek for "Kitchen Nightmare"): the system spots the
-"nightmares" hiding inside food recalls — allergens, contaminations, foreign
-bodies — before they reach the plate. It works in two steps: first it detects
-the hazard, then it uses that prediction to help predict the
+**Efialtis Stin Kouzina** (Greek for "Kitchen Nightmare"): the system finds the
+"nightmares" hiding in food recalls — allergens, contaminations, foreign
+bodies — before they reach the plate. It works in two steps: first it finds the
+hazard, and then it uses that prediction to help predict the
 product.
 
 ## The metric
 
-The official ST1 score is not a simple average of two classifiers:
+The official ST1 isn't a simple average of two classifiers:
 
 ```
 (macroF1(hazard) + macroF1(product, only where the hazard is correct)) / 2
 ```
 
-In other words, if the hazard comes out wrong, a correct product prediction
-does not count for that example. The problem is hard because the classes are
-heavily imbalanced (long-tail) and macro-F1 gives equal weight to the rare ones.
+So if the hazard comes out wrong, getting the product right doesn't count for
+that example. The problem is hard because the classes are very
+imbalanced (long-tail) and macro-F1 gives the rare ones equal weight.
 
-## Exploratory data analysis (EDA)
+## Data analysis (EDA)
 
-The categories are strongly imbalanced — a few classes (allergens, biological)
-hold most of the examples, while several have barely any. That is what makes
-macro-F1 difficult.
+The categories are heavily imbalanced — a few classes (allergens, biological)
+have most of the examples, while several have barely any. That's what makes
+macro-F1 hard.
 
 ![Hazard category distribution](code/results/figures/hazard_dist.png)
 
 ![Product category distribution](code/results/figures/product_dist.png)
 
-The hazard–product relationship is not one-to-one: the same hazard shows up in
-many products and vice versa, so both the text and the hazard
-signal are needed.
+The hazard–product relationship isn't one-to-one: the same hazard shows up in
+lots of products and the other way around, so you need both the text and the
+hazard signal.
 
 ![Hazard × product relationship](code/results/figures/joint_haz_prod.png)
 
-The documents vary a lot in length (which is why character
-n-grams were also used), and the per-year distribution is not uniform.
+The texts don't all have the same length (that's why I also used character
+n-grams), and the distribution per year isn't uniform.
 
 ![Document length](code/results/figures/doc_length.png)
 
 ![Reports per year](code/results/figures/year_dist.png)
 
-## The approach
+## The method
 
-1. **TF-IDF** over `title + text + metadata` (word 1–2 grams + char_wb 3–5 grams).
+1. **TF-IDF** on `title + text + metadata` (word 1–2 grams + char_wb 3–5 grams).
    The metadata (country, year, month) go in as plain text tokens.
-2. **MiniLM** sentence embeddings (384-dim, L2-normalized), stacked onto the TF-IDF
-   with scale=0.7 — found via a sweep; it is "U-shaped" (too much or too little hurts).
+2. **MiniLM** sentence embeddings (384-dim, L2-normalized), stacked on the TF-IDF
+   with scale=0.7 — found with a sweep, it's a "U-shape" (too much or too little hurts).
 3. **Hazard** LinearSVC on the stacked feature space.
 4. **Out-of-fold** (5-fold) hazard predictions on the train set: every row gets
-   a prediction from a model that never saw it, so the product learns a
+   a prediction from a model that didn't see it, so the product learns a
    realistic (~94%) hazard signal without leakage.
 5. The OOF hazard goes in as a one-hot feature and the **product** LinearSVC
-   is trained on the final feature space.
+   trains on the final feature space.
 6. Final submission: **stacking ensemble** (TF-IDF/OOF + MiniLM) with weights
-   selected through cross-validation.
+   picked through cross-validation.
 
 ## Results
 
@@ -74,17 +74,17 @@ n-grams were also used), and the per-year distribution is not uniform.
 | + MiniLM embeddings (scale=0.7) | 0.7737 | 0.7512 |
 | **Stacking ensemble (final)** | — | **0.7775** |
 
-Key lesson: the single validation split (565 samples) was unreliable.
-With 5-fold CV the ST1 came out at 0.7036 ± 0.0516 — "improvements" below ~0.05
-were lost in the variance. Only the stacking survived both the CV and
-Kaggle. A fine-tuned DistilBERT was also tried, but on this small dataset with
-macro-F1 the classic TF-IDF + LinearSVC (class_weight=balanced) proved
+Big lesson: the single validation split (565 samples) was unreliable.
+With 5-fold CV the ST1 came out 0.7036 ± 0.0516 — "improvements" below ~0.05
+got lost in the variance. Only the stacking passed both the CV and
+Kaggle. I also tried a fine-tuned DistilBERT, but on this small dataset with
+macro-F1 the classic TF-IDF + LinearSVC (class_weight=balanced) turned out
 better.
 
 ## Layout
 
 ```
-code/            code (notebooks 01–12, src/, tests, main.py)
+code/            the code (notebooks 01–12, src/, tests, main.py)
   notebooks/     EDA -> classical -> SOTA -> embeddings -> CV -> stacking
   src/           helpers (preprocess, scoring, io, models)
   results/       figures, analysis, predictions, logs
@@ -94,9 +94,9 @@ presentation.pdf presentation
 ```
 
 Detailed run instructions and the full experiment history (including what
-**didn't** work) live in [`code/README.md`](code/README.md) and in `report.pdf`.
+**didn't** work) are in [`code/README.md`](code/README.md) and in `report.pdf`.
 
-## Quick start
+## Quick run
 
 ```powershell
 cd code

@@ -4,9 +4,9 @@ Project for the Kaggle challenge of SemEval-2025 Task 9, ST1. For every food
 recall we want to predict the `hazard-category` and the `product-category`.
 
 The name **Efialtis Stin Kouzina** (Greek for "Kitchen Nightmare") describes
-what the system does: it spots the "nightmares" hiding inside food recalls
-before they reach the plate. The method works in two steps: first we detect
-the hazard (what is wrong with the recall), and then the product
+what the system does: it finds the "nightmares" hiding in food recalls
+before they reach the plate. The method works in two steps: first we find
+the hazard (what's wrong with the recall), and then the product
 classifier uses that signal together with the feature space to
 decide the product.
 
@@ -18,19 +18,19 @@ The score is:
 
 ## Folders
 
-`data/raw/` holds `train.csv`, `valid.csv`, and `test.csv`.
-`src/` holds the core helper functions. `notebooks/` holds
-scripts `01`–`12`: `01`–`09` form the local pipeline (EDA →
-classical → SOTA → embeddings) and `10`–`12` cover the CV evaluation
-(`10_cv_eval.py`), the threshold tuning (`11_threshold_tune_cv.py`), and the
+`data/raw/` has `train.csv`, `valid.csv` and `test.csv`.
+`src/` has the basic helper functions. `notebooks/` has the
+scripts `01`–`12`: `01`–`09` are the local pipeline (EDA →
+classical → SOTA → embeddings) and `10`–`12` are the CV evaluation
+(`10_cv_eval.py`), the threshold tuning (`11_threshold_tune_cv.py`) and the
 final stacking ensemble (`12_stacking_ensemble.py`).
 
-The report figures live in `results/figures/`, while the class reports,
-confusion matrices, and error examples are in `results/analysis/`. The Kaggle
+The report plots are in `results/figures/`, and the class reports, the
+confusions and the error examples are in `results/analysis/`. The Kaggle
 submissions are in `results/predictions/`.
 
 The report (`report.docx`/`report.pdf`) and the presentation
-(`presentation.pptx`/`presentation.pdf`) sit in the parent folder of the
+(`presentation.pptx`/`presentation.pdf`) are in the parent folder of the
 deliverable, and the simple unit tests in `tests/test_core.py`.
 
 `notebooks/10_distilbert_colab.ipynb` is the **DistilBERT fine-tune
@@ -45,7 +45,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## Running everything
+## To run everything
 
 ```powershell
 python notebooks/01_eda.py
@@ -60,7 +60,7 @@ python notebooks/09_embeddings.py
 python -m unittest discover -s tests
 ```
 
-## Producing just the final submission
+## For just the final submission
 
 ```powershell
 python main.py --submit
@@ -68,13 +68,13 @@ python notebooks/06_eval.py
 python -m unittest discover -s tests
 ```
 
-(`main.py` invokes `notebooks/12_stacking_ensemble.py`.)
+(`main.py` calls `notebooks/12_stacking_ensemble.py`.)
 
 The final submission is
-`results/predictions/submission_stacking.csv`, with a best confirmed Kaggle
-public score of `0.77750`.
+`results/predictions/submission_stacking.csv`, with best confirmed Kaggle
+public score `0.77750`.
 
-## What was tried
+## What I tried
 
 | Notebook | Model | Validation ST1 |
 | --- | --- | ---: |
@@ -93,33 +93,33 @@ MiniLM run. The best Kaggle public score is `0.77750`, from
 
 ## How Efialtis Stin Kouzina works
 
-1. TF-IDF (word 1-2 + char_wb 3-5) over `title + text + metadata`.
+1. TF-IDF (word 1-2 + char_wb 3-5) on `title + text + metadata`.
 2. **Sentence embeddings** (MiniLM-L6-v2, 384-dim, L2-normalized) for every
-   document. Cached in `results/cache/emb_minilm_*.npy`.
-3. Stack TF-IDF + (embeddings × scale=0.7). The scale was found via a sweep
-   over `[0, 0.2, 0.3, 0.5, 0.7, 1.0]` and is **U-shaped**: too much or too
-   little hurts — the embeddings should contribute without drowning out
+   text. Cached in `results/cache/emb_minilm_*.npy`.
+3. Stack TF-IDF + (embeddings × scale=0.7). The scale was found with a sweep
+   over `[0, 0.2, 0.3, 0.5, 0.7, 1.0]` and it's a **U-shape**: too much or too
+   little hurts — the embeddings have to contribute without drowning out
    the 160k TF-IDF features.
-4. The hazard LinearSVC is trained on the stacked space.
-5. **5-fold out-of-fold** hazard predictions over the train set (a realistic
-   ~94% accurate signal, with no leakage).
-6. The OOF hazard goes in as a sparse **10-dimensional one-hot**, stacked
-   onto the TF-IDF+embeddings space.
-7. The product LinearSVC is trained on the final feature space.
-8. At test time, the hazard comes from the full-train hazard model (not OOF).
+4. The hazard LinearSVC trains on the stacked space.
+5. **5-fold out-of-fold** hazard predictions on the train set (a realistic
+   ~94% accurate signal, no leakage).
+6. The OOF hazard goes in as a sparse **10-dim one-hot**, stacked on the
+   TF-IDF+embeddings.
+7. The product LinearSVC trains on the final feature space.
+8. On the test set, the hazard comes from the full-train hazard model (not OOF).
 
 ## Failed experiments
 
 Early on:
 
-- Per-hazard product models (08_efialtis_kouzina attempt, ST1=0.7311): one
-  separate LinearSVC per hazard. It fell apart because product labels appear
-  across many hazards and the macro F1 loses coherence.
+- Per-hazard product models (08_efialtis_kouzina attempt, ST1=0.7311): a
+  separate LinearSVC per hazard. It fell apart because the product labels show
+  up across many hazards and the macro F1 loses coherence.
 - MiniLM embeddings at raw scale=1.0 (ST1=0.7448): the dense embeddings
   dominated the sparse TF-IDF. Fix: scale=0.7.
 
-Later (after the stacking ensemble hit 0.77750 on Kaggle), 6 more
-approaches were tried and none moved the score up:
+Later (after the stacking ensemble hit 0.77750 on Kaggle), I tried 6
+more approaches and none of them moved me up:
 
 | Experiment | CV gain | Folds + | Kaggle delta |
 |---|---:|:---:|---:|
@@ -130,13 +130,13 @@ approaches were tried and none moved the score up:
 | mpnet swap (× 0.7) | +0.031 | 5/5 | −0.015 |
 | Hybrid weighted majority vote | — | — | −0.010 |
 
-A note on DistilBERT: the v2 fine-tune scored ST1 `0.8071` on the single
+A note on DistilBERT: the v2 fine-tune gave ST1 `0.8071` on the single
 validation split (565 samples) — tempting, but the single split
-overestimates. No BERT variant (v2/v3) beat the TF-IDF + MiniLM
-stack under proper CV or on Kaggle, so the neural models remained a
-documented baseline and stayed out of the final pipeline.
+overestimates. No BERT version (v2/v3) beat the TF-IDF + MiniLM
+stack in proper CV or on Kaggle, so the neural models stayed as a
+documented baseline and didn't go into the final pipeline.
 
-0.77750 is the best result achieved across everything tried. More in
+0.77750 is the best I got with everything I tried. More in
 sections 14-15 of `report.docx`.
 
 ## DistilBERT on Colab (neural baseline)
@@ -149,15 +149,15 @@ one for hazard and one for product; documented in section 12 of the report):
 3. Open `10_distilbert_colab.ipynb` (File → Upload notebook).
 4. In the Files panel (left), upload `data/raw/train.csv`,
    `data/raw/valid.csv`, `data/raw/test.csv`.
-5. **Runtime → Run all**. Expect ~30-45 minutes.
-6. Download `submission_distilbert.csv` and submit it to Kaggle.
+5. **Runtime → Run all**. Takes ~30-45 minutes.
+6. Download `submission_distilbert.csv` and upload it to Kaggle.
 
-It also produces `logits_haz_*.npy`, `logits_prod_*.npy`, and `label_maps.json`
-in case you later want to ensemble with Efialtis Stin Kouzina locally.
+It also produces `logits_haz_*.npy`, `logits_prod_*.npy` and `label_maps.json`
+in case you want to ensemble with Efialtis Stin Kouzina locally later.
 
 ## Final CSVs
 
-`results/predictions/` holds the submissions of every stage:
+In `results/predictions/` you'll find the submissions from every stage:
 
 - `submission_stacking.csv` — **final / best**, Kaggle public score
   `0.77750`.
@@ -167,7 +167,7 @@ in case you later want to ensemble with Efialtis Stin Kouzina locally.
   baseline submissions from sections 4-9.
 
 The failed experiments of section 15 (3-way stacking, mpnet swap, hybrid
-vote, etc.) are not kept as files; their Kaggle scores and the analysis
+vote etc.) aren't kept as files; their Kaggle scores and the analysis
 are in section 15 of the report and in the "Failed experiments" table
 above.
 
