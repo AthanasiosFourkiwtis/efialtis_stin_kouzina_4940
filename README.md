@@ -3,9 +3,27 @@
 Food Hazard Detection — SemEval-2025 Task 9, Subtask 1 (ST1).
 Project for the NLP 053 course, CSE UOI 2026. Student ID 4940, Athanasios Fourkiotis.
 
+## What the assignment asks
+
 For every food recall we want to predict two labels from the text:
 the `hazard-category` (10 classes) and the `product-category`
-(22 classes).
+(22 classes). The task runs as a Kaggle challenge: you train on ~5k labelled
+recalls, submit predictions for ~1k unseen ones, and you're scored with the
+official ST1 metric (see below). The course also asks for proper data
+analysis, a documented history of what you tried (including failures), and a
+report.
+
+## How I solved it (short version)
+
+The key observation is that the metric couples the two labels: the product
+only counts when the hazard is right. So instead of two independent
+classifiers, I predict the hazard first and feed that prediction into the
+product model as a feature. To avoid the product learning to blindly trust a
+too-perfect hazard signal, the training set gets **out-of-fold** hazard
+predictions (each row is predicted by a model that never saw it). On top of
+that, TF-IDF gets combined with MiniLM sentence embeddings for the semantic
+signal, and the final submission is a stacking ensemble of the two model
+families. The step-by-step version is in "The method" below.
 
 ## The name
 
